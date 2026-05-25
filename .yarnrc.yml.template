@@ -1,0 +1,22 @@
+approvedGitRepositories:
+  - "**"
+
+enableScripts: true
+
+nodeLinker: node-modules
+
+npmScopes:
+  zaiusinc:
+    npmRegistryServer: "https://npm.pkg.github.com"
+    npmAlwaysAuth: true
+  optimizely:
+    npmRegistryServer: "https://optimizely.jfrog.io/optimizely/api/npm/npm/"
+    npmAlwaysAuth: true
+
+npmRegistries:
+  "https://optimizely.jfrog.io/optimizely/api/npm/npm/":
+    npmAuthToken: "${ARTIFACTORY_IDENTITY_TOKEN-}"
+    npmAlwaysAuth: true
+  "https://npm.pkg.github.com":
+    npmAuthToken: "${GITHUB_TOKEN-}"
+    npmAlwaysAuth: true

@@ -1,0 +1,74 @@
+import {existsSync, readdirSync} from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+import {UI_EXTENSION_INJECTION_POINTS} from '@zaiusinc/ocp-cms-ui-extensions-app-sdk';
+import {defineConfig} from 'vite';
+
+const cwd = path.dirname(fileURLToPath(import.meta.url));
+
+const UI_SRC_ROOT = 'src/cms-ui-extensions';
+const SHARED_ROOT = 'src/shared';
+const UI_OUT_DIR = 'dist/cms-ui-extensions';
+// Pattern: <basename>.<injection-point>.<ts|tsx|js|jsx> — e.g.
+// `analytics-dashboard.sidebar.tsx`. The injection-point list is the SDK's
+// source of truth so this regex stays in sync as new surfaces are added.
+const ENTRY_PATTERN = new RegExp(
+  `\\.(${UI_EXTENSION_INJECTION_POINTS.join('|')})\\.(tsx?|jsx?)$`
+);
+
+function discoverEntries() {
+  const absRoot = path.resolve(cwd, UI_SRC_ROOT);
+  if (!existsSync(absRoot)) return {};
+
+  const entries = {};
+  const dirents = readdirSync(absRoot, {recursive: true, withFileTypes: true});
+  for (const dirent of dirents) {
+    if (!dirent.isFile() || !ENTRY_PATTERN.test(dirent.name)) continue;
+    const basename = dirent.name.replace(ENTRY_PATTERN, '');
+    const fullPath = path.join(dirent.parentPath, dirent.name);
+    if (entries[basename]) {
+      throw new Error(`Duplicate UI extension entry point '${basename}': ${entries[basename]} and ${fullPath}`);
+    }
+    entries[basename] = fullPath;
+  }
+  return entries;
+}
+
+export default defineConfig({
+  // Asset URLs are emitted as `new URL('./assets/foo-<hash>.svg', import.meta.url).href`
+  // so each bundle resolves them against whatever CDN it's served from. `base`
+  // alone doesn't achieve this in JS bundles, so renderBuiltUrl (officially
+  // supported, namespaced as experimental) forces relative URLs.
+  base: './',
+  experimental: {
+    renderBuiltUrl: () => ({relative: true})
+  },
+  resolve: {
+    alias: {
+      '@shared': path.resolve(cwd, SHARED_ROOT)
+    }
+  },
+  build: {
+    outDir: path.resolve(cwd, UI_OUT_DIR),
+    emptyOutDir: false,
+    sourcemap: true,
+    // Disable Vite's data-URL inlining so every imported asset lands as a
+    // hashed file under dist/cms-ui-extensions/assets/.
+    assetsInlineLimit: 0,
+    // Emits dist/cms-ui-extensions/manifest.json mapping each source entry to
+    // its built file plus referenced chunks/assets (with content hashes).
+    // The OCP CDN uploader and discovery API enumerate bundles from this.
+    manifest: 'manifest.json',
+    rollupOptions: {
+      preserveEntrySignatures: 'strict',
+      input: discoverEntries(),
+      output: {
+        format: 'es',
+        entryFileNames: '[name].js',
+        chunkFileNames: 'shared/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]'
+      }
+    }
+  }
+});

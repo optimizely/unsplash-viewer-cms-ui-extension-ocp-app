@@ -1,0 +1,199 @@
+.ocp-unsplash,
+.ocp-unsplash *,
+.ocp-unsplash *::before,
+.ocp-unsplash *::after {
+  box-sizing: border-box;
+}
+
+.ocp-unsplash {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #18181b;
+}
+
+.ocp-unsplash__search {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.ocp-unsplash__search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+}
+
+.ocp-unsplash__search input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.ocp-unsplash__search button {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+}
+
+.ocp-unsplash__status {
+  font-size: 11px;
+  color: #52525b;
+  min-height: 14px;
+  line-height: 1.35;
+  word-wrap: break-word;
+}
+
+.ocp-unsplash__status--error {
+  color: #b91c1c;
+}
+
+.ocp-unsplash__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.ocp-unsplash__thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f4f4f5;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+  transition: border-color 0.1s ease;
+}
+
+.ocp-unsplash__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ocp-unsplash__thumb:hover {
+  border-color: #93c5fd;
+}
+
+.ocp-unsplash__thumb--selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.ocp-unsplash__pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ocp-unsplash__pagination button {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  min-width: 28px;
+}
+
+.ocp-unsplash__pagination-info {
+  flex: 1 1 auto;
+  font-size: 11px;
+  color: #52525b;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ocp-unsplash__detail {
+  border-top: 1px solid #e4e4e7;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ocp-unsplash__detail-image {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+  background: #f4f4f5;
+}
+
+.ocp-unsplash__row {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  align-items: baseline;
+  line-height: 1.4;
+}
+
+.ocp-unsplash__row-label {
+  flex: 0 0 64px;
+  color: #71717a;
+}
+
+.ocp-unsplash__row-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #18181b;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ocp-unsplash__row-value--link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ocp-unsplash__row-value--link:hover {
+  text-decoration: underline;
+}
+
+.ocp-unsplash__row--multi .ocp-unsplash__row-value {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: 500;
+  color: #3f3f46;
+}
+
+.ocp-unsplash__detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.ocp-unsplash__detail-actions button {
+  flex: 1 1 auto;
+  padding: 6px 10px;
+}
+
+.ocp-unsplash__detail-actions a {
+  font-size: 11px;
+  color: #2563eb;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ocp-unsplash__detail-actions a:hover {
+  text-decoration: underline;
+}

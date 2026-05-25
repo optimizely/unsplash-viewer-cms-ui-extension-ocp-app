@@ -1,0 +1,29 @@
+meta:
+  app_id: unsplash_viewer
+  display_name: Unsplash Viewer
+  version: 0.0.1-dev.12
+  vendor: optimizely
+  summary: Browse, search, and copy Unsplash photo URLs from the CMS sidebar.
+  support_url: https://support.optimizely.com
+  contact_email: support@optimizely.com
+  categories:
+    - Testing & Utilities
+  availability:
+    - all
+
+runtime: node22-cms-ext
+
+functions:
+  cms_extension:
+    entry_point: CmsUiExtension
+    description: Backend proxy for the Unsplash Viewer sidebar extension.
+    accepts: cms_ui_extension
+
+ui_extensions:
+  sidebar:
+    - name: unsplash-viewer
+      entry_point: UnsplashViewer
+      display_name: Unsplash Viewer
+
+environment:
+  - APP_ENV_UNSPLASH_ACCESS_KEY
