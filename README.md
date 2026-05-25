@@ -112,6 +112,40 @@ yarn test          # placeholder — no tests defined
 yarn validate      # lint + typecheck + build + ocp-app-sdk validate
 ```
 
+## Development workflow
+
+End-to-end loop for getting a change in front of CMS editors.
+
+1. **Set up your dev environment.** Install the OCP CLI and configure tenant
+   credentials. See
+   [Configure your development environment](https://docs.developers.optimizely.com/optimizely-connect-platform/docs/configure-your-development-environment-ocp2).
+2. **Build and validate locally.**
+
+   ```bash
+   yarn validate
+   ```
+
+3. **Publish a dev version** to OCP. Bumps the dev build number and uploads:
+
+   ```bash
+   ocp app prepare --bump-dev-version --publish
+   ```
+
+4. **Install the dev app** into your sandbox account (one-time per OCP
+   instance — subsequent publishes auto-upgrade to consecutive semver
+   versions):
+
+   ```bash
+   ocp directory install <app_id>@<app_version> <tracker_id>
+   ```
+
+5. **Enable the extension in CMS.** Open the OCP App Directory, authenticate
+   and configure the app (credentials in the settings form), then enable the
+   sidebar extension. The panel appears in the CMS sidebar.
+
+Iterate: edit code → `yarn validate` → `ocp app prepare --bump-dev-version
+--publish` → reload CMS to pick up the new bundle.
+
 ## Further reading
 
 - `@zaiusinc/ocp-cms-ui-extensions-app-sdk` — OCP plugin that wires CMS UI
