@@ -12,19 +12,28 @@
     "validate": "yarn lint && yarn typecheck && yarn build && npx ocp-app-sdk validate"
   },
   "dependencies": {
-    "@optimizely/cms-extensions-sdk": "1.0.0-dev.1",
+    "@optiaxiom/react": "^3.0.0",
+    "@optimizely/cms-extensibility-sdk": "1.0.0",
+    "@optimizely/ocp-cms-ui-extensions-sdk": "1.0.0-beta.2",
+    "@tanstack/react-table": "^8.13.0",
+    "@tanstack/table-core": "^8.13.0",
     "@zaiusinc/app-sdk": "3.4.1",
     "@zaiusinc/node-sdk": "3.0.0",
-    "@zaiusinc/ocp-cms-ui-extensions-app-sdk": "^0.0.1-dev.4"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/parser": "^8.32.0",
+    "@vitejs/plugin-react": "^5.0.0",
     "@zaiusinc/eslint-config-presets": "3.1.3-dev.1",
     "copyfiles": "^2.4.1",
     "eslint": "^9.25.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.2",
-    "vite": "^5.4.19"
+    "vite": "^5.4.19",
+    "vite-plugin-css-injected-by-js": "^5.0.1"
   }
 }

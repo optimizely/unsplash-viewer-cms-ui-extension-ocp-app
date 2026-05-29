@@ -1,5 +1,5 @@
 import {defineConfig} from '@zaiusinc/app-sdk';
-import {cmsUiExtensions} from '@zaiusinc/ocp-cms-ui-extensions-app-sdk';
+import {cmsUiExtensions} from '@optimizely/ocp-cms-ui-extensions-sdk';
 
 export default defineConfig({
   plugins: [cmsUiExtensions()]

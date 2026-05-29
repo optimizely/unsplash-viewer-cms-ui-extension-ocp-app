@@ -1,6 +1,6 @@
-import type {ViewExtensionContext} from '@optimizely/cms-extensions-sdk';
+import type {ExtensionContext} from '@optimizely/cms-extensibility-sdk';
 
-export async function getExtensionMeta(context: ViewExtensionContext): Promise<{
+export async function getExtensionMeta(context: ExtensionContext): Promise<{
   id: string;
   displayName: string;
   module: string;

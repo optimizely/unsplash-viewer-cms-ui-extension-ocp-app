@@ -2,8 +2,10 @@ import {existsSync, readdirSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-import {UI_EXTENSION_INJECTION_POINTS} from '@zaiusinc/ocp-cms-ui-extensions-app-sdk';
+import {UI_EXTENSION_INJECTION_POINTS} from '@optimizely/ocp-cms-ui-extensions-sdk';
+import react from '@vitejs/plugin-react';
 import {defineConfig} from 'vite';
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 
 const cwd = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,6 +43,7 @@ export default defineConfig({
   // alone doesn't achieve this in JS bundles, so renderBuiltUrl (officially
   // supported, namespaced as experimental) forces relative URLs.
   base: './',
+  plugins: [react(), cssInjectedByJsPlugin()],
   experimental: {
     renderBuiltUrl: () => ({relative: true})
   },

@@ -33,13 +33,15 @@ the pieces fit together.
                                                   └──────────────────┘
 ```
 
-- **Sidebar UI** (`src/cms-ui-extensions/UnsplashViewer.sidebar.tsx`) — runs
-  inside the CMS iframe. This sample uses plain DOM to keep the bundle small
-  and the example dependency-free, but the UI bundle is just a standard Vite
-  build — you can use React, Vue, Svelte, or any framework of your choice.
-  Add it to `package.json`, update `vite.ui.config.mjs` as needed, and
-  mount your root component from the sidebar entry point. Talks to the
-  backend via `context.extension.invokeFunction()`.
+- **Sidebar UI** (`src/cms-ui-extensions/unsplash/UnsplashViewer.sidebar.tsx`) —
+  runs inside the CMS iframe. Built with React 19 and the
+  [Optimizely Axiom](https://optimizely-axiom.github.io/optiaxiom/) design
+  system. The entry calls `register(factory)` from
+  `@optimizely/cms-extensibility-sdk`; the SDK mounts the returned React tree
+  itself. Talks to the backend via `context.extension.invokeFunction()` and
+  subscribes to `context.content` to auto-search by the currently-selected
+  content `key`. Swap React/Axiom for any framework by editing the entry and
+  adjusting `vite.ui.config.mjs` plugins.
 - **Backend function** (`src/backend/functions/CmsUiExtension.ts`) — runs on
   the OCP platform. Holds credentials, proxies to the external API. Uses an
   action-router pattern: the UI sends `{action, params}`; the function
@@ -69,7 +71,7 @@ When forking, **replace these** (demo-specific to Unsplash):
 
 - The function envelope + error-handling pattern in `CmsUiExtension.ts`.
 - The lifecycle settings-validation flow in `Lifecycle.ts`.
-- DOM helpers under `src/cms-ui-extensions/common/`.
+- Shared helpers under `src/cms-ui-extensions/common/` (e.g. `runtime.ts`).
 - Build configs: `vite.backend.config.mjs`, `vite.ui.config.mjs`,
   `ocp-app.config.mjs`.
 - The overall `src/` layout (`backend/`, `cms-ui-extensions/`, `shared/`).
@@ -148,9 +150,9 @@ Iterate: edit code → `yarn validate` → `ocp app prepare --bump-dev-version
 
 ## Further reading
 
-- `@zaiusinc/ocp-cms-ui-extensions-app-sdk` — OCP plugin that wires CMS UI
+- `@optimizely/ocp-cms-ui-extensions-app-sdk` — OCP plugin that wires CMS UI
   extensions into the app build (`ocp-app.config.mjs`).
-- `@optimizely/cms-extensions-sdk` — runtime SDK used inside the sidebar
+- `@optimizely/cms-extensibility-sdk` — runtime SDK used inside the sidebar
   bundle to talk to the CMS host (`context.extension.invokeFunction`, etc.).
 - `@zaiusinc/app-sdk` — base classes for backend functions and lifecycle
   hooks (`App.Function`, `App.Lifecycle`, `App.Response`).

@@ -1,9 +1,20 @@
-import type {ViewExtension} from '@optimizely/cms-extensions-sdk';
+import {
+  AxiomProvider,
+  Box,
+  Button,
+  Card,
+  CardHeader,
+  CardImage,
+  CardPreview,
+  Grid,
+  Group,
+  SearchInput,
+  Spinner,
+  Text
+} from '@optiaxiom/react';
+import {register, type ContentState, type ExtensionContext} from '@optimizely/cms-extensibility-sdk';
 import {CMS_EXTENSION_FUNCTION_ID, DEFAULT_PER_PAGE, UNSPLASH_DEVELOPERS_URL} from '@shared/constants';
-
-import {createButton} from '../common/dom';
-
-import styles from './UnsplashViewer.css?inline';
+import {useCallback, useEffect, useRef, useState} from 'react';
 
 interface Photo {
   id: string;
@@ -34,13 +45,6 @@ type Envelope<T> =
   | {ok: true; result: T}
   | {ok: false; error: string; message?: string};
 
-function injectStyles(scope: HTMLElement, css: string) {
-  const style = document.createElement('style');
-  style.setAttribute('data-ocp-extension-style', 'unsplash-viewer');
-  style.textContent = css;
-  scope.appendChild(style);
-}
-
 function describeError(payload: ErrorPayload): string {
   switch (payload.error) {
     case 'missing_access_key':
@@ -62,286 +66,233 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-interface RowOptions {
-  multi?: boolean;
-  href?: string;
+interface StatusState {
+  text: string;
+  error: boolean;
 }
 
-function createRow(label: string, value: string, options: RowOptions = {}): HTMLDivElement {
-  const row = document.createElement('div');
-  row.className = options.multi ? 'ocp-unsplash__row ocp-unsplash__row--multi' : 'ocp-unsplash__row';
+function UnsplashViewer({context}: {context: ExtensionContext}) {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [status, setStatus] = useState<StatusState>({text: 'Type a search term to begin.', error: false});
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<Photo | null>(null);
+  const [copyLabel, setCopyLabel] = useState('Copy URL');
+  const inFlight = useRef<Promise<unknown> | null>(null);
+  const lastAutoQuery = useRef<string | null>(null);
 
-  const labelEl = document.createElement('span');
-  labelEl.className = 'ocp-unsplash__row-label';
-  labelEl.textContent = label;
-  row.appendChild(labelEl);
-
-  let valueEl: HTMLElement;
-  if (options.href) {
-    const anchor = document.createElement('a');
-    anchor.className = 'ocp-unsplash__row-value ocp-unsplash__row-value--link';
-    anchor.href = options.href;
-    anchor.target = '_blank';
-    anchor.rel = 'noopener noreferrer';
-    anchor.textContent = value;
-    valueEl = anchor;
-  } else {
-    valueEl = document.createElement('span');
-    valueEl.className = 'ocp-unsplash__row-value';
-    valueEl.textContent = value;
-    valueEl.title = value;
-  }
-  row.appendChild(valueEl);
-
-  return row;
-}
-
-export default function UnsplashViewer(): ViewExtension {
-  let root: HTMLDivElement | null = null;
-  let selectedPhotoId: string | null = null;
-  let currentQuery = '';
-  let currentPage = 1;
-  let lastResult: SearchResult | null = null;
-  let inFlight: Promise<unknown> | null = null;
-
-  return {
-    async render(context) {
-      injectStyles(context.container, styles);
-
-      const card = document.createElement('div');
-      card.className = 'ocp-unsplash';
-
-      const searchRow = document.createElement('div');
-      searchRow.className = 'ocp-unsplash__search';
-      const input = document.createElement('input');
-      input.type = 'search';
-      input.placeholder = 'Search photos…';
-      input.spellcheck = false;
-      const searchButton = createButton('Go', 'primary');
-      searchRow.appendChild(input);
-      searchRow.appendChild(searchButton);
-      card.appendChild(searchRow);
-
-      const status = document.createElement('div');
-      status.className = 'ocp-unsplash__status';
-      card.appendChild(status);
-
-      const grid = document.createElement('div');
-      grid.className = 'ocp-unsplash__grid';
-      card.appendChild(grid);
-
-      const pagination = document.createElement('div');
-      pagination.className = 'ocp-unsplash__pagination';
-      const prevButton = createButton('‹', 'neutral');
-      prevButton.setAttribute('aria-label', 'Previous page');
-      const pageInfo = document.createElement('span');
-      pageInfo.className = 'ocp-unsplash__pagination-info';
-      const nextButton = createButton('›', 'neutral');
-      nextButton.setAttribute('aria-label', 'Next page');
-      pagination.appendChild(prevButton);
-      pagination.appendChild(pageInfo);
-      pagination.appendChild(nextButton);
-      pagination.style.display = 'none';
-      card.appendChild(pagination);
-
-      const detail = document.createElement('div');
-      detail.className = 'ocp-unsplash__detail';
-      detail.style.display = 'none';
-      card.appendChild(detail);
-
-      root = card;
-      context.container.appendChild(root);
-
-      const setStatus = (text: string, level: 'info' | 'error' = 'info') => {
-        status.textContent = text;
-        status.classList.toggle('ocp-unsplash__status--error', level === 'error');
-      };
-
-      const renderDetail = (photo: Photo | null) => {
-        detail.innerHTML = '';
-        if (!photo) {
-          detail.style.display = 'none';
-          return;
-        }
-        detail.style.display = 'flex';
-
-        const img = document.createElement('img');
-        img.className = 'ocp-unsplash__detail-image';
-        img.src = photo.urls.small;
-        img.alt = photo.altDescription || photo.description || `Photo by ${photo.user.name}`;
-        detail.appendChild(img);
-
-        detail.appendChild(createRow('Author', photo.user.name, {href: photo.user.profileUrl}));
-        detail.appendChild(createRow('Size', `${photo.width} × ${photo.height}`));
-
-        const description = photo.description || photo.altDescription;
-        if (description) {
-          detail.appendChild(createRow('About', description, {multi: true}));
-        }
-
-        const actions = document.createElement('div');
-        actions.className = 'ocp-unsplash__detail-actions';
-
-        const copyButton = createButton('Copy URL', 'primary');
-        actions.appendChild(copyButton);
-
-        const unsplashLink = document.createElement('a');
-        unsplashLink.href = photo.links.html;
-        unsplashLink.target = '_blank';
-        unsplashLink.rel = 'noopener noreferrer';
-        unsplashLink.textContent = 'View on Unsplash ↗';
-        actions.appendChild(unsplashLink);
-
-        detail.appendChild(actions);
-
-        copyButton.onclick = async () => {
-          try {
-            await navigator.clipboard.writeText(photo.urls.regular);
-            copyButton.textContent = 'Copied!';
-            window.setTimeout(() => {
-              copyButton.textContent = 'Copy URL';
-            }, 1500);
-            // Required by Unsplash API guidelines whenever a photo is used.
-            void context.extension.invokeFunction(CMS_EXTENSION_FUNCTION_ID, {
-              action: 'trackDownload',
-              params: {downloadLocation: photo.links.downloadLocation},
-            });
-          } catch {
-            setStatus('Could not copy to clipboard.', 'error');
-          }
-        };
-      };
-
-      const renderGrid = (photos: Photo[]) => {
-        grid.innerHTML = '';
-        photos.forEach((photo) => {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'ocp-unsplash__thumb';
-          if (photo.color) {
-            button.style.background = photo.color;
-          }
-          if (photo.id === selectedPhotoId) {
-            button.classList.add('ocp-unsplash__thumb--selected');
-          }
-          const img = document.createElement('img');
-          img.src = photo.urls.thumb;
-          img.alt = photo.altDescription || photo.description || `Photo by ${photo.user.name}`;
-          img.loading = 'lazy';
-          button.appendChild(img);
-          button.onclick = () => {
-            selectedPhotoId = photo.id;
-            renderGrid(photos);
-            renderDetail(photo);
-          };
-          grid.appendChild(button);
+  const runSearch = useCallback(async (rawQuery: string, nextPage: number) => {
+    const trimmed = rawQuery.trim();
+    if (!trimmed) {
+      setStatus({text: 'Enter a search term first.', error: false});
+      return;
+    }
+    setPage(nextPage);
+    setStatus({text: 'Searching…', error: false});
+    setLoading(true);
+    const pending = context.extension.invokeFunction(CMS_EXTENSION_FUNCTION_ID, {
+      action: 'search',
+      params: {query: trimmed, page: nextPage, perPage: DEFAULT_PER_PAGE}
+    });
+    inFlight.current = pending;
+    try {
+      const response = await pending;
+      if (inFlight.current !== pending) return;
+      const {statusCode} = response;
+      const envelope = (response.data ?? {}) as Envelope<SearchResult>;
+      const isEnvelope = envelope && typeof envelope === 'object' && 'ok' in envelope;
+      if (statusCode !== 200 && (!isEnvelope || envelope.ok)) {
+        setStatus({
+          text: describeError({error: 'request_failed', message: `Backend returned HTTP ${statusCode}.`}),
+          error: true
         });
-      };
-
-      const renderPagination = (result: SearchResult) => {
-        if (result.totalPages <= 1) {
-          pagination.style.display = 'none';
-          return;
-        }
-        pagination.style.display = 'flex';
-        pageInfo.textContent = `${result.page} / ${result.totalPages} · ${formatCount(result.total)}`;
-        (prevButton as HTMLButtonElement).disabled = result.page <= 1;
-        (nextButton as HTMLButtonElement).disabled = result.page >= result.totalPages;
-      };
-
-      const runSearch = async (query: string, page: number) => {
-        if (!query.trim()) {
-          setStatus('Enter a search term first.');
-          return;
-        }
-        currentQuery = query.trim();
-        currentPage = page;
-        setStatus('Searching…');
-        const pending = context.extension.invokeFunction(CMS_EXTENSION_FUNCTION_ID, {
-          action: 'search',
-          params: {query: currentQuery, page: currentPage, perPage: DEFAULT_PER_PAGE},
-        });
-        inFlight = pending;
-        try {
-          const response = await pending;
-          if (inFlight !== pending) return;
-          const {statusCode} = response;
-          const envelope = (response.data ?? {}) as Envelope<SearchResult>;
-          const isEnvelope = envelope && typeof envelope === 'object' && 'ok' in envelope;
-          if (statusCode !== 200 && (!isEnvelope || envelope.ok)) {
-            setStatus(
-              describeError({error: 'request_failed', message: `Backend returned HTTP ${statusCode}.`}),
-              'error',
-            );
-            grid.innerHTML = '';
-            pagination.style.display = 'none';
-            return;
-          }
-          if (!isEnvelope) {
-            setStatus('Unexpected response from backend.', 'error');
-            grid.innerHTML = '';
-            pagination.style.display = 'none';
-            return;
-          }
-          if (!envelope.ok) {
-            setStatus(describeError(envelope as ErrorPayload), 'error');
-            grid.innerHTML = '';
-            pagination.style.display = 'none';
-            return;
-          }
-          const result = envelope.result;
-          lastResult = result;
-          if (result.results.length === 0) {
-            setStatus(`No results for "${currentQuery}".`);
-            grid.innerHTML = '';
-            pagination.style.display = 'none';
-            return;
-          }
-          setStatus(`${formatCount(result.total)} results for "${currentQuery}"`);
-          selectedPhotoId = null;
-          renderDetail(null);
-          renderGrid(result.results);
-          renderPagination(result);
-        } catch (err) {
-          if (inFlight !== pending) return;
-          setStatus(err instanceof Error ? err.message : 'Search failed.', 'error');
-        } finally {
-          if (inFlight === pending) inFlight = null;
-        }
-      };
-
-      searchButton.onclick = () => void runSearch(input.value, 1);
-      input.onkeydown = (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          void runSearch(input.value, 1);
-        }
-      };
-      prevButton.onclick = () => {
-        if (lastResult && currentPage > 1) void runSearch(currentQuery, currentPage - 1);
-      };
-      nextButton.onclick = () => {
-        if (lastResult && currentPage < lastResult.totalPages) {
-          void runSearch(currentQuery, currentPage + 1);
-        }
-      };
-
-      setStatus('Type a search term to begin.');
-      await context.extension.setReady();
-    },
-
-    destroy() {
-      if (root && root.parentElement) {
-        root.parentElement.removeChild(root);
+        setResult(null);
+        return;
       }
-      root = null;
-      lastResult = null;
-      inFlight = null;
-      selectedPhotoId = null;
-    },
+      if (!isEnvelope) {
+        setStatus({text: 'Unexpected response from backend.', error: true});
+        setResult(null);
+        return;
+      }
+      if (!envelope.ok) {
+        setStatus({text: describeError(envelope as ErrorPayload), error: true});
+        setResult(null);
+        return;
+      }
+      const next = envelope.result;
+      setResult(next);
+      setSelected(null);
+      if (next.results.length === 0) {
+        setStatus({text: `No results for "${trimmed}".`, error: false});
+      } else {
+        setStatus({text: `${formatCount(next.total)} results for "${trimmed}"`, error: false});
+      }
+    } catch (err) {
+      if (inFlight.current !== pending) return;
+      setStatus({text: err instanceof Error ? err.message : 'Search failed.', error: true});
+    } finally {
+      if (inFlight.current === pending) inFlight.current = null;
+      setLoading(false);
+    }
+  }, [context]);
 
-    onConfigurationChange() {
-      // No per-extension configuration consumed in this version.
-    },
+  useEffect(() => {
+    void context.extension.setReady();
+    const unsubscribe = context.content.subscribe((state: ContentState) => {
+      const key = state?.key;
+      if (!key || key === lastAutoQuery.current) return;
+      lastAutoQuery.current = key;
+      setQuery(key);
+      void runSearch(key, 1);
+    });
+    return unsubscribe;
+  }, [context, runSearch]);
+
+  const onCopy = async () => {
+    if (!selected) return;
+    try {
+      await navigator.clipboard.writeText(selected.urls.regular);
+      setCopyLabel('Copied!');
+      window.setTimeout(() => setCopyLabel('Copy URL'), 1500);
+      // Required by Unsplash API guidelines whenever a photo is used.
+      void context.extension.invokeFunction(CMS_EXTENSION_FUNCTION_ID, {
+        action: 'trackDownload',
+        params: {downloadLocation: selected.links.downloadLocation}
+      });
+    } catch {
+      setStatus({text: 'Could not copy to clipboard.', error: true});
+    }
   };
+
+  const totalPages = result?.totalPages ?? 0;
+
+  return (
+    <Box p="16">
+      <Group flexDirection="column" gap="16">
+        <Group gap="8">
+          <SearchInput
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                void runSearch(query, 1);
+              }
+            }}
+            placeholder="Search photos…"
+            value={query}
+            w="full"
+          />
+          <Button appearance="primary" onClick={() => void runSearch(query, 1)}>
+            Go
+          </Button>
+        </Group>
+
+        <Text color={status.error ? 'fg.error' : 'fg.secondary'} fontSize="sm">
+          {status.text}
+        </Text>
+
+        {loading && <Spinner size="sm" />}
+
+        {result && result.results.length > 0 && (
+          <Grid gap="8" gridTemplateColumns="3">
+            {result.results.map((photo) => (
+              <Box
+                borderColor={photo.id === selected?.id ? 'border.accent' : 'transparent'}
+                key={photo.id}
+                onClick={() => setSelected(photo)}
+                style={{borderStyle: 'solid', borderWidth: 2, cursor: 'pointer'}}
+              >
+                <Card>
+                  <CardPreview>
+                    <CardImage
+                      alt={photo.altDescription || photo.description || `Photo by ${photo.user.name}`}
+                      src={photo.urls.thumb}
+                    />
+                  </CardPreview>
+                </Card>
+              </Box>
+            ))}
+          </Grid>
+        )}
+
+        {result && totalPages > 1 && (
+          <Group gap="8" justifyContent="center">
+            <Button
+              aria-label="Previous page"
+              disabled={page <= 1}
+              onClick={() => void runSearch(query, page - 1)}
+            >
+              ‹
+            </Button>
+            <Text fontSize="sm">
+              {page} / {totalPages} · {formatCount(result.total)}
+            </Text>
+            <Button
+              aria-label="Next page"
+              disabled={page >= totalPages}
+              onClick={() => void runSearch(query, page + 1)}
+            >
+              ›
+            </Button>
+          </Group>
+        )}
+
+        {selected && (
+          <Card>
+            <CardPreview>
+              <CardImage
+                alt={selected.altDescription || selected.description || `Photo by ${selected.user.name}`}
+                src={selected.urls.small}
+              />
+            </CardPreview>
+            <CardHeader>
+              <Group flexDirection="column" gap="4">
+                <Group gap="4" justifyContent="space-between">
+                  <Text color="fg.secondary" fontSize="xs">Author</Text>
+                  <a
+                    href={selected.user.profileUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {selected.user.name}
+                  </a>
+                </Group>
+                <Group gap="4" justifyContent="space-between">
+                  <Text color="fg.secondary" fontSize="xs">Size</Text>
+                  <Text fontSize="sm">{selected.width} × {selected.height}</Text>
+                </Group>
+                {(selected.description || selected.altDescription) && (
+                  <Group flexDirection="column" gap="2">
+                    <Text color="fg.secondary" fontSize="xs">About</Text>
+                    <Text fontSize="sm">{selected.description || selected.altDescription}</Text>
+                  </Group>
+                )}
+              </Group>
+            </CardHeader>
+            <Box p="12">
+              <Group gap="8">
+                <Button appearance="primary" onClick={() => void onCopy()}>
+                  {copyLabel}
+                </Button>
+                <a
+                  href={selected.links.html}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  View on Unsplash ↗
+                </a>
+              </Group>
+            </Box>
+          </Card>
+        )}
+      </Group>
+    </Box>
+  );
 }
+
+register((context) => (
+  <AxiomProvider>
+    <UnsplashViewer context={context} />
+  </AxiomProvider>
+));
