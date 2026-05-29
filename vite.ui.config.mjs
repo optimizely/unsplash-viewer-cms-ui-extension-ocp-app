@@ -56,9 +56,10 @@ export default defineConfig({
     outDir: path.resolve(cwd, UI_OUT_DIR),
     emptyOutDir: false,
     sourcemap: true,
-    // Disable Vite's data-URL inlining so every imported asset lands as a
-    // hashed file under dist/cms-ui-extensions/assets/.
-    assetsInlineLimit: 0,
+    // Inline web fonts as data URIs so the CSS-in-JS bundle is self-contained
+    // when served inside the CMS iframe (relative font URLs would 404). All
+    // other assets keep landing as hashed files under dist/cms-ui-extensions/assets/.
+    assetsInlineLimit: (filePath) => /\.(woff2?|ttf|otf|eot)$/i.test(filePath),
     // Emits dist/cms-ui-extensions/manifest.json mapping each source entry to
     // its built file plus referenced chunks/assets (with content hashes).
     // The OCP CDN uploader and discovery API enumerate bundles from this.
