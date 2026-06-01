@@ -15,6 +15,7 @@ import {
 import {register, type ContentState, type ExtensionContext} from '@optimizely/cms-extensibility-sdk';
 import {CMS_EXTENSION_FUNCTION_ID, DEFAULT_PER_PAGE, UNSPLASH_DEVELOPERS_URL} from '@shared/constants';
 import {useCallback, useEffect, useRef, useState} from 'react';
+import {copyToClipboard} from '../common/clipboard';
 
 interface Photo {
   id: string;
@@ -71,6 +72,8 @@ interface StatusState {
   error: boolean;
 }
 
+const COPY_NOTICE_MS = 1500;
+
 function UnsplashViewer({context}: {context: ExtensionContext}) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -78,9 +81,22 @@ function UnsplashViewer({context}: {context: ExtensionContext}) {
   const [status, setStatus] = useState<StatusState>({text: 'Type a search term to begin.', error: false});
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Photo | null>(null);
-  const [copyLabel, setCopyLabel] = useState('Copy URL');
+  const [notice, setNotice] = useState<StatusState | null>(null);
+  const [pageOpenBlocked, setPageOpenBlocked] = useState(false);
   const inFlight = useRef<Promise<unknown> | null>(null);
   const lastAutoQuery = useRef<string | null>(null);
+  const noticeTimer = useRef<number | null>(null);
+
+  const flashNotice = useCallback((text: string, error: boolean) => {
+    if (noticeTimer.current !== null) {
+      window.clearTimeout(noticeTimer.current);
+    }
+    setNotice({text, error});
+    noticeTimer.current = window.setTimeout(() => {
+      noticeTimer.current = null;
+      setNotice((prev) => (prev && prev.text === text ? null : prev));
+    }, COPY_NOTICE_MS);
+  }, []);
 
   const runSearch = useCallback(async (rawQuery: string, nextPage: number) => {
     const trimmed = rawQuery.trim();
@@ -123,6 +139,8 @@ function UnsplashViewer({context}: {context: ExtensionContext}) {
       const next = envelope.result;
       setResult(next);
       setSelected(null);
+      setPageOpenBlocked(false);
+      setNotice(null);
       if (next.results.length === 0) {
         setStatus({text: `No results for "${trimmed}".`, error: false});
       } else {
@@ -149,27 +167,55 @@ function UnsplashViewer({context}: {context: ExtensionContext}) {
     return unsubscribe;
   }, [context, runSearch]);
 
-  const onCopy = async () => {
+  useEffect(() => () => {
+    if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
+  }, []);
+
+  useEffect(() => {
+    setPageOpenBlocked(false);
+    setNotice(null);
+  }, [selected?.id]);
+
+  const copyAndNotify = useCallback(async (text: string, successMsg: string) => {
+    const ok = await copyToClipboard(text);
+    flashNotice(ok ? successMsg : 'Could not copy to clipboard.', !ok);
+    return ok;
+  }, [flashNotice]);
+
+  const onCopyImageUrl = useCallback(async () => {
     if (!selected) return;
-    try {
-      await navigator.clipboard.writeText(selected.urls.regular);
-      setCopyLabel('Copied!');
-      window.setTimeout(() => setCopyLabel('Copy URL'), 1500);
+    const ok = await copyAndNotify(selected.urls.regular, 'Image URL copied');
+    if (ok) {
       // Required by Unsplash API guidelines whenever a photo is used.
       void context.extension.invokeFunction(CMS_EXTENSION_FUNCTION_ID, {
         action: 'trackDownload',
         params: {downloadLocation: selected.links.downloadLocation}
       });
-    } catch {
-      setStatus({text: 'Could not copy to clipboard.', error: true});
     }
-  };
+  }, [context, copyAndNotify, selected]);
+
+  const onOpenUnsplash = useCallback(() => {
+    if (!selected) return;
+    let opened: Window | null = null;
+    try {
+      opened = window.open(selected.links.html, '_blank', 'noopener,noreferrer');
+    } catch {
+      opened = null;
+    }
+    if (opened) {
+      setPageOpenBlocked(false);
+      flashNotice('Opened in new tab', false);
+    } else {
+      setPageOpenBlocked(true);
+      flashNotice('Browser blocked the popup — copy the URL below.', true);
+    }
+  }, [flashNotice, selected]);
 
   const totalPages = result?.totalPages ?? 0;
 
   return (
-    <Box p="16">
-      <Group flexDirection="column" gap="16">
+    <Box p="12">
+      <Group flexDirection="column" gap="12">
         <Group gap="8">
           <SearchInput
             onChange={(event) => setQuery(event.target.value)}
@@ -188,31 +234,44 @@ function UnsplashViewer({context}: {context: ExtensionContext}) {
           </Button>
         </Group>
 
-        <Text color={status.error ? 'fg.error' : 'fg.secondary'} fontSize="sm">
-          {status.text}
-        </Text>
+        {status.text && (
+          <Text color={status.error ? 'fg.error' : 'fg.secondary'} fontSize="sm">
+            {status.text}
+          </Text>
+        )}
 
         {loading && <Spinner size="sm" />}
 
         {result && result.results.length > 0 && (
           <Grid gap="8" gridTemplateColumns="3">
-            {result.results.map((photo) => (
-              <Box
-                borderColor={photo.id === selected?.id ? 'border.accent' : 'transparent'}
-                key={photo.id}
-                onClick={() => setSelected(photo)}
-                style={{borderStyle: 'solid', borderWidth: 2, cursor: 'pointer'}}
-              >
-                <Card>
-                  <CardPreview>
-                    <CardImage
-                      alt={photo.altDescription || photo.description || `Photo by ${photo.user.name}`}
-                      src={photo.urls.thumb}
-                    />
-                  </CardPreview>
-                </Card>
-              </Box>
-            ))}
+            {result.results.map((photo) => {
+              const isSelected = photo.id === selected?.id;
+              return (
+                <Box
+                  cursor="pointer"
+                  key={photo.id}
+                  onClick={() => setSelected(photo)}
+                  overflow="hidden"
+                  rounded="sm"
+                  style={{
+                    outline: isSelected ? '2px solid #0037FF' : '2px solid transparent',
+                    outlineOffset: 1
+                  }}
+                >
+                  <img
+                    alt={photo.altDescription || photo.description || `Photo by ${photo.user.name}`}
+                    src={photo.urls.thumb}
+                    style={{
+                      aspectRatio: '1 / 1',
+                      display: 'block',
+                      height: 'auto',
+                      objectFit: 'cover',
+                      width: '100%'
+                    }}
+                  />
+                </Box>
+              );
+            })}
           </Grid>
         )}
 
@@ -247,47 +306,89 @@ function UnsplashViewer({context}: {context: ExtensionContext}) {
               />
             </CardPreview>
             <CardHeader>
-              <Group flexDirection="column" gap="4">
-                <Group gap="4" justifyContent="space-between">
+              <Group flexDirection="column" gap="8">
+                <Group flexDirection="column" gap="2">
                   <Text color="fg.secondary" fontSize="xs">Author</Text>
-                  <a
-                    href={selected.user.profileUrl}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {selected.user.name}
-                  </a>
+                  <Text fontSize="sm">{selected.user.name}</Text>
+                  <CopyableUrl
+                    label="Copy author link"
+                    onCopy={() => void copyAndNotify(selected.user.profileUrl, 'Author link copied')}
+                    url={selected.user.profileUrl}
+                  />
                 </Group>
-                <Group gap="4" justifyContent="space-between">
+
+                <Group gap="8" justifyContent="space-between">
                   <Text color="fg.secondary" fontSize="xs">Size</Text>
                   <Text fontSize="sm">{selected.width} × {selected.height}</Text>
                 </Group>
+
                 {(selected.description || selected.altDescription) && (
                   <Group flexDirection="column" gap="2">
                     <Text color="fg.secondary" fontSize="xs">About</Text>
                     <Text fontSize="sm">{selected.description || selected.altDescription}</Text>
                   </Group>
                 )}
+
               </Group>
             </CardHeader>
             <Box p="12">
-              <Group gap="8">
-                <Button appearance="primary" onClick={() => void onCopy()}>
-                  {copyLabel}
-                </Button>
-                <a
-                  href={selected.links.html}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  View on Unsplash ↗
-                </a>
+              <Group flexDirection="column" gap="8">
+                <Group flexDirection="column" gap="8">
+                  <Button
+                    appearance="primary"
+                    onClick={() => void onCopyImageUrl()}
+                    w="full"
+                  >
+                    Copy image URL
+                  </Button>
+                  <Button
+                    appearance="default"
+                    onClick={onOpenUnsplash}
+                    w="full"
+                  >
+                    View on Unsplash
+                  </Button>
+                </Group>
+
+                {notice && (
+                  <Text color={notice.error ? 'fg.error' : 'fg.success'} fontSize="xs">
+                    {notice.text}
+                  </Text>
+                )}
+
+                {pageOpenBlocked && (
+                  <Group flexDirection="column" gap="2">
+                    <Text color="fg.secondary" fontSize="xs">Unsplash page link</Text>
+                    <CopyableUrl
+                      label="Copy Unsplash page link"
+                      onCopy={() => void copyAndNotify(selected.links.html, 'Page link copied')}
+                      url={selected.links.html}
+                    />
+                  </Group>
+                )}
               </Group>
             </Box>
           </Card>
         )}
       </Group>
     </Box>
+  );
+}
+
+function CopyableUrl({label, onCopy, url}: {label: string; onCopy: () => void; url: string}) {
+  return (
+    <Group alignItems="center" gap="4">
+      <Text
+        color="fg.secondary"
+        fontSize="xs"
+        style={{flex: 1, minWidth: 0, overflowWrap: 'anywhere', userSelect: 'all', wordBreak: 'break-all'}}
+      >
+        {url}
+      </Text>
+      <Button appearance="subtle" aria-label={label} onClick={onCopy} size="sm">
+        Copy
+      </Button>
+    </Group>
   );
 }
 
