@@ -5,7 +5,6 @@ dist/
 *.log
 
 .pnp.*
-.yarnrc.yml
 .yarn/
 
 .git/

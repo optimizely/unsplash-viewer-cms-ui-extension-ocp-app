@@ -14,7 +14,7 @@
   "dependencies": {
     "@optiaxiom/react": "^3.0.0",
     "@optimizely/cms-extensibility-sdk": "1.0.0",
-    "@optimizely/ocp-cms-ui-extensions-sdk": "1.0.0-beta.2",
+    "@optimizely/ocp-cms-ui-extensions-sdk": "1.0.0-beta.3",
     "@tanstack/react-table": "^8.13.0",
     "@tanstack/table-core": "^8.13.0",
     "@zaiusinc/app-sdk": "3.4.1",
@@ -28,7 +28,7 @@
     "@types/react-dom": "^19.0.0",
     "@typescript-eslint/parser": "^8.32.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "@zaiusinc/eslint-config-presets": "3.1.3-dev.1",
+    "@zaiusinc/eslint-config-presets": "3.1.3",
     "copyfiles": "^2.4.1",
     "eslint": "^9.25.1",
     "rimraf": "^6.0.1",
