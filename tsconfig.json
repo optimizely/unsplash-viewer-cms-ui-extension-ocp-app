@@ -1,0 +1,28 @@
+{
+  "include": ["./src"],
+  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "noEmit": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "lib": ["es2022", "dom"],
+    "module": "commonjs",
+    "target": "es2022",
+    "jsx": "react-jsx",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["src/shared/*"]
+    }
+  }
+}

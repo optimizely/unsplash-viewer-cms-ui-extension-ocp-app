@@ -1,0 +1,13 @@
+sections:
+  - key: credentials
+    label: Unsplash Credentials
+    elements:
+      - type: text
+        key: accessKey
+        label: Unsplash Access Key
+        help: >-
+          Create one at https://unsplash.com/developers. Leave blank to use the app's default access key (demonstration purposes only).
+      - type: button
+        label: Save
+        action: saveCredentials
+        style: primary
