@@ -43,7 +43,7 @@ export default defineConfig({
   // alone doesn't achieve this in JS bundles, so renderBuiltUrl (officially
   // supported, namespaced as experimental) forces relative URLs.
   base: './',
-  plugins: [react(), cssInjectedByJsPlugin()],
+  plugins: [react(), cssInjectedByJsPlugin({ relativeCSSInjection: true })],
   experimental: {
     renderBuiltUrl: () => ({relative: true})
   },
