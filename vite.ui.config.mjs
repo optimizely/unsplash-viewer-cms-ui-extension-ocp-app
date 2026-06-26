@@ -67,6 +67,7 @@ export default defineConfig({
     rollupOptions: {
       preserveEntrySignatures: 'strict',
       input: discoverEntries(),
+      external: ['@tiptap/extension-table-row', '@tiptap/extension-table-header', '@tiptap/extension-table-cell', '@tiptap/extension-table', '@tiptap/extension-link','@tiptap/extension-placeholder', '@tiptap/react', '@tiptap/starter-kit'],
       output: {
         format: 'es',
         entryFileNames: '[name].js',
