@@ -2,7 +2,7 @@ sections:
   - key: credentials
     label: Unsplash Credentials
     elements:
-      - type: text
+      - type: secret
         key: accessKey
         label: Unsplash Access Key
         help: >-
