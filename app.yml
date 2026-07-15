@@ -1,7 +1,7 @@
 meta:
   app_id: unsplash_viewer
   display_name: Unsplash Viewer
-  version: 0.0.1-dev.20
+  version: 0.0.1-dev.24
   vendor: optimizely
   summary: Browse, search, and copy Unsplash photo URLs from the CMS sidebar.
   support_url: https://support.optimizely.com
@@ -24,6 +24,10 @@ ui_extensions:
     - name: unsplash-viewer
       entry_point: UnsplashViewer
       display_name: Unsplash Viewer
+  view:
+    - name: unsplash-gallery
+      entry_point: UnsplashGallery
+      display_name: Unsplash Gallery
 
 environment:
   - APP_ENV_UNSPLASH_ACCESS_KEY

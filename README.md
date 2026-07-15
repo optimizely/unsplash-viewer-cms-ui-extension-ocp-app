@@ -8,29 +8,37 @@ extension.
 
 ## What this app does
 
-The included demo adds an Unsplash photo search panel to the CMS sidebar.
-Editors type a query, browse results, view photo metadata, and copy image
-URLs to the clipboard. It exercises the full extension surface — sidebar UI,
-backend proxy, settings form, and credential validation — so you can see how
-the pieces fit together.
+The included demo adds Unsplash photo search to the CMS in two surfaces:
+
+- A **sidebar panel** scoped to the currently-selected content — auto-searches
+  by content `key`, shows results with metadata, and copies image URLs.
+- A full-page **gallery view** — a wider, higher-density grid for browsing
+  search results independent of any single content item.
+
+Both surfaces share the same backend proxy, settings form, and credential
+validation, so you can see how the full extension surface fits together and
+how multiple UI extensions reuse one backend function.
 
 ## Architecture
 
 ```
-┌─────────────────────────┐    invokeFunction({action, params})
-│  CMS sidebar (iframe)   │ ───────────────────────────────────┐
-│  src/cms-ui-extensions  │                                    │
-└─────────────────────────┘                                    ▼
-                                              ┌──────────────────────────┐
-                                              │  Backend function (OCP)  │
-                                              │  src/backend/functions   │
-                                              └────────────┬─────────────┘
-                                                           │ HTTPS + Access Key
-                                                           ▼
-                                                  ┌──────────────────┐
-                                                  │  Third-party API │
-                                                  │  (Unsplash)      │
-                                                  └──────────────────┘
+┌─────────────────────────┐
+│  CMS sidebar (iframe)   │──┐
+│  *.sidebar.tsx          │  │
+└─────────────────────────┘  │ invokeFunction({action, params})
+                             ├────────────────────────┐
+┌─────────────────────────┐  │                        │
+│  CMS full-page view     │──┘                        ▼
+│  *.view.tsx             │              ┌──────────────────────────┐
+└─────────────────────────┘              │  Backend function (OCP)  │
+                                         │  src/backend/functions   │
+                                         └─────────────┬────────────┘
+                                                       │ HTTPS + Access Key
+                                                       ▼
+                                               ┌──────────────────┐
+                                               │  Third-party API │
+                                               │  (Unsplash)      │
+                                               └──────────────────┘
 ```
 
 - **Sidebar UI** (`src/cms-ui-extensions/unsplash/UnsplashViewer.sidebar.tsx`) —
@@ -42,6 +50,13 @@ the pieces fit together.
   subscribes to `context.content` to auto-search by the currently-selected
   content `key`. Swap React/Axiom for any framework by editing the entry and
   adjusting `vite.ui.config.mjs` plugins.
+- **Gallery view** (`src/cms-ui-extensions/unsplash/UnsplashGallery.view.tsx`) —
+  a full-page `view` extension registered the same way as the sidebar. Because
+  it isn't scoped to a single content item, it doesn't subscribe to
+  `context.content`; instead it drives search from a query box and renders a
+  wider, higher-density grid (more results per page). It calls the **same**
+  backend function and `search` / `trackDownload` actions as the sidebar,
+  demonstrating how multiple UI extensions reuse one backend function.
 - **Backend function** (`src/backend/functions/CmsUiExtension.ts`) — runs on
   the OCP platform. Holds credentials, proxies to the external API. Uses an
   action-router pattern: the UI sends `{action, params}`; the function
@@ -61,7 +76,10 @@ configure, and auth/rate-limit handling lives in one place.
 When forking, **replace these** (demo-specific to Unsplash):
 
 - `src/backend/lib/unsplash.ts` — swap for your own API client.
-- `src/cms-ui-extensions/UnsplashViewer.sidebar.tsx` — your sidebar UI.
+- `src/cms-ui-extensions/unsplash/UnsplashViewer.sidebar.tsx` — your sidebar UI.
+- `src/cms-ui-extensions/unsplash/UnsplashGallery.view.tsx` — your full-page
+  view UI (drop it, along with the `view:` block in `app.yml`, if you only
+  need a sidebar).
 - The `search` / `trackDownload` actions in
   `src/backend/functions/CmsUiExtension.ts` — your action set.
 - Credential fields in `forms/settings.yml` — your settings shape.
@@ -81,9 +99,11 @@ When forking, **replace these** (demo-specific to Unsplash):
 1. In `app.yml`, update `meta`: `app_id`, `display_name`, `summary`,
    `vendor`, `version`, `categories`.
 2. In `app.yml`, rename the function (`cms_extension` /
-   `entry_point: CmsUiExtension`) and the sidebar extension
-   (`name: unsplash-viewer` / `entry_point: UnsplashViewer`,
-   `display_name`) to match your domain.
+   `entry_point: CmsUiExtension`), the sidebar extension
+   (`name: unsplash-viewer` / `entry_point: UnsplashViewer`), and the view
+   extension (`name: unsplash-gallery` / `entry_point: UnsplashGallery`) —
+   plus their `display_name`s — to match your domain. Remove the `view:`
+   block if you don't need a full-page view.
 3. Rename the matching files under `src/backend/functions/` and
    `src/cms-ui-extensions/` to match the new `entry_point` values.
 4. Update `name` (and any other identifying fields) in `package.json`.
@@ -141,9 +161,10 @@ End-to-end loop for getting a change in front of CMS editors.
    ocp directory install <app_id>@<app_version> <tracker_id>
    ```
 
-5. **Enable the extension in CMS.** Open the OCP App Directory, authenticate
+5. **Enable the extensions in CMS.** Open the OCP App Directory, authenticate
    and configure the app (credentials in the settings form), then enable the
-   sidebar extension. The panel appears in the CMS sidebar.
+   extensions. The sidebar panel appears in the CMS sidebar, and the gallery
+   is available as a full-page view.
 
 Iterate: edit code → `yarn validate` → `ocp app prepare --bump-dev-version
 --publish` → reload CMS to pick up the new bundle.
