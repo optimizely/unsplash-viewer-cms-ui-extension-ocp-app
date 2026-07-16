@@ -60,10 +60,6 @@ export default defineConfig({
     // when served inside the CMS iframe (relative font URLs would 404). All
     // other assets keep landing as hashed files under dist/cms-ui-extensions/assets/.
     assetsInlineLimit: (filePath) => /\.(woff2?|ttf|otf|eot)$/i.test(filePath),
-    // Emits dist/cms-ui-extensions/manifest.json mapping each source entry to
-    // its built file plus referenced chunks/assets (with content hashes).
-    // The OCP CDN uploader and discovery API enumerate bundles from this.
-    manifest: 'manifest.json',
     rollupOptions: {
       preserveEntrySignatures: 'strict',
       input: discoverEntries(),
