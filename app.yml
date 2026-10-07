@@ -1,7 +1,7 @@
 meta:
   app_id: unsplash_viewer
   display_name: Unsplash Viewer
-  version: 0.0.1-dev.24
+  version: 1.0.1-dev.1
   vendor: optimizely
   summary: Browse, search, and copy Unsplash photo URLs from the CMS sidebar.
   support_url: https://support.optimizely.com
@@ -28,6 +28,14 @@ ui_extensions:
     - name: unsplash-gallery
       entry_point: UnsplashGallery
       display_name: Unsplash Gallery
+  property-editor:
+    # Stores the picked photo's URL. No property_format: Unsplash URLs carry a
+    # long `ixid` query parameter and can exceed a short string's length limit.
+    - name: unsplash-image-picker
+      entry_point: UnsplashImagePicker
+      display_name: Unsplash Image Picker
+      metadata:
+        property_type: string
 
 environment:
   - APP_ENV_UNSPLASH_ACCESS_KEY
