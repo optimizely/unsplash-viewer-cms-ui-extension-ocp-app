@@ -13,11 +13,11 @@
   },
   "dependencies": {
     "@optiaxiom/react": "^3.0.0",
-    "@optimizely/cms-extensibility-sdk": "1.0.1",
-    "@optimizely/ocp-cms-ui-extensions-sdk": "1.0.0-beta.4",
+    "@optimizely/cms-extensibility-sdk": "1.1.0",
+    "@optimizely/ocp-cms-ui-extensions-sdk": "1.1.0-beta.1",
     "@tanstack/react-table": "^8.13.0",
     "@tanstack/table-core": "^8.13.0",
-    "@zaiusinc/app-sdk": "3.4.1",
+    "@zaiusinc/app-sdk": "3.5.1",
     "@zaiusinc/node-sdk": "3.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
