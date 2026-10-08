@@ -168,6 +168,10 @@ function UnsplashImagePicker({context}: {context: ExtensionContext}) {
         setSaveError(outcome.error || 'The CMS rejected the value.');
         return false;
       }
+      // Reflect the accepted value right away. The host is not guaranteed to
+      // echo our own write back through subscribe(), so waiting for it can
+      // leave the field showing the previous value.
+      setProperty((prev) => ({...(prev ?? {readonly: false}), value}));
       return true;
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Could not save the value.');
