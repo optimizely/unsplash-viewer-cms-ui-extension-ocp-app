@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 10
+  version: 9
   cacheKey: 10c0
 
 "@babel/runtime@npm:^7.28.6":
@@ -530,24 +530,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@optimizely/cms-extensibility-sdk@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@optimizely/cms-extensibility-sdk@npm:1.0.1"
+"@optimizely/cms-extensibility-sdk@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@optimizely/cms-extensibility-sdk@npm:1.1.0"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/6102dec22e9fb4254a5248517ce541a0e4123f1daecb80d4a3d25db7258ac16debb86d87da2c0ce3b19d7ab20dc8c3f630b262303f0d923229b248a93efa4642
+  checksum: 10c0/b72b02271abff45af16703613a40a67e444fe0dc819e4200886315315ebb5857608bd6cdee0cad079722d6d9de00a1d3e42eb3cd31718631b50500f425c45bb5
   languageName: node
   linkType: hard
 
-"@optimizely/ocp-cms-ui-extensions-sdk@npm:1.0.0-beta.4":
-  version: 1.0.0-beta.4
-  resolution: "@optimizely/ocp-cms-ui-extensions-sdk@npm:1.0.0-beta.4"
+"@optimizely/ocp-cms-ui-extensions-sdk@npm:1.1.0-beta.1":
+  version: 1.1.0-beta.1
+  resolution: "@optimizely/ocp-cms-ui-extensions-sdk@npm:1.1.0-beta.1"
   dependencies:
     glob: "npm:^11.0.1"
   peerDependencies:
     "@zaiusinc/app-sdk": ">=3.3.5"
-  checksum: 10c0/153071ff0f6596f827ea07a62c92fdef9bc3305139e213ccf28a205e05fe9f86e03fa6244649e114f186b962b191a21d0a04354d287e2fc422b5c7506e596c8f
+  checksum: 10c0/38ad9c6e1f343c4ac52fce70aa9f0b48a2a88d6c8dbbfe3fe26d0a5d314c71b392d2a92b3f1f1d977854dff08d35e27e8ff48cd3b1867d3ad1b6ab7f076efbfa
   languageName: node
   linkType: hard
 
@@ -2106,19 +2106,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zaiusinc/app-sdk@npm:3.4.1":
-  version: 3.4.1
-  resolution: "@zaiusinc/app-sdk@npm:3.4.1"
+"@zaiusinc/app-sdk@npm:3.5.1":
+  version: 3.5.1
+  resolution: "@zaiusinc/app-sdk@npm:3.5.1"
   dependencies:
     "@zaiusinc/app-forms-schema": "npm:^2.0.0"
-    ajv: "npm:^8.18.0"
+    ajv: "npm:^8.20.0"
     chalk: "npm:^4.1.2"
     cron-expression-validator: "npm:^1.0.20"
     csv-parser: "npm:^3.2.0"
     deep-freeze: "npm:^0.0.1"
     email-validator: "npm:^2.0.4"
     glob: "npm:^12.0.0"
-    js-yaml: "npm:^4.1.1"
+    js-yaml: "npm:^4.2.0"
     json-schema-merge-allof: "npm:^0.8.1"
     jsonpath-rfc9535: "npm:^1.3.0"
     language-tags: "npm:^1.0.9"
@@ -2131,7 +2131,7 @@ __metadata:
     "@zaiusinc/node-sdk": ^3.0.0
   bin:
     ocp-app-sdk: dist/cli.js
-  checksum: 10c0/e185ee65bb7d6dfaa31a8a7594c4493bd802b6e77786dcefd7d674dc14a2acda3a25355cac796272ec1d78fb8b580745f6f38cc7ac0305ac1e2fe6f9ef0a0cc0
+  checksum: 10c0/fb7d3cc1411adb308116216e9ec57a5a13ee52908f58df8f44abf0c4be1d869026252886fae3f6880c992f6526e7c46869ca359a7ce34d7c475ca21148c13e2f
   languageName: node
   linkType: hard
 
@@ -2204,7 +2204,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.17.1, ajv@npm:^8.18.0":
+"ajv@npm:^8.17.1, ajv@npm:^8.20.0":
   version: 8.20.0
   resolution: "ajv@npm:8.20.0"
   dependencies:
@@ -4346,6 +4346,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"js-yaml@npm:^4.2.0":
+  version: 4.3.2
+  resolution: "js-yaml@npm:4.3.2"
+  dependencies:
+    argparse: "npm:^2.0.1"
+  bin:
+    js-yaml: bin/js-yaml.js
+  checksum: 10c0/dedd34c2e8fef1d504687f1bc94ed0ee1311a1f78770fa2800352c6d59c635ccf555009d74e9afe529ae62199da2b1ccef30e53dc84dcd8d2d8187c22574bc97
+  languageName: node
+  linkType: hard
+
 "jsdoc-type-pratt-parser@npm:~7.0.0":
   version: 7.0.0
   resolution: "jsdoc-type-pratt-parser@npm:7.0.0"
@@ -5497,7 +5508,7 @@ __metadata:
 
 "resolve@patch:resolve@npm%3A^2.0.0-next.5#optional!builtin<compat/resolve>, resolve@patch:resolve@npm%3A^2.0.0-next.6#optional!builtin<compat/resolve>":
   version: 2.0.0-next.7
-  resolution: "resolve@patch:resolve@npm%3A2.0.0-next.7#optional!builtin<compat/resolve>::version=2.0.0-next.7&hash=9bd1a5"
+  resolution: "resolve@patch:resolve@npm%3A2.0.0-next.7#optional!builtin<compat/resolve>::version=2.0.0-next.7&hash=c3c19d"
   dependencies:
     es-errors: "npm:^1.3.0"
     is-core-module: "npm:^2.16.2"
@@ -5507,7 +5518,7 @@ __metadata:
     supports-preserve-symlinks-flag: "npm:^1.0.0"
   bin:
     resolve: bin/resolve
-  checksum: 10c0/911e8321c64ec2a723247dbeabfcb7663577adf52af642bfda61ddee686fbef2255ad529ff57ee8e3884ee23186b85b2637988bfafc0a9a3a81a98bd4af1e2fc
+  checksum: 10c0/6bb6f1d8a1789f7a5b4e35d950e76bc0ba632ff7d51fe86b6f34fb5f41e1ce0f7b884ec166828cfc0728ddffeaee49527711d752d12398297f90c51acd22195e
   languageName: node
   linkType: hard
 
@@ -6307,8 +6318,8 @@ __metadata:
   resolution: "unsplash_viewer_app@workspace:."
   dependencies:
     "@optiaxiom/react": "npm:^3.0.0"
-    "@optimizely/cms-extensibility-sdk": "npm:1.0.1"
-    "@optimizely/ocp-cms-ui-extensions-sdk": "npm:1.0.0-beta.4"
+    "@optimizely/cms-extensibility-sdk": "npm:1.1.0"
+    "@optimizely/ocp-cms-ui-extensions-sdk": "npm:1.1.0-beta.1"
     "@tanstack/react-table": "npm:^8.13.0"
     "@tanstack/table-core": "npm:^8.13.0"
     "@types/node": "npm:^22.13.10"
@@ -6316,7 +6327,7 @@ __metadata:
     "@types/react-dom": "npm:^19.0.0"
     "@typescript-eslint/parser": "npm:^8.32.0"
     "@vitejs/plugin-react": "npm:^6.0.0"
-    "@zaiusinc/app-sdk": "npm:3.4.1"
+    "@zaiusinc/app-sdk": "npm:3.5.1"
     "@zaiusinc/eslint-config-presets": "npm:3.1.3"
     "@zaiusinc/node-sdk": "npm:3.0.0"
     copyfiles: "npm:^2.4.1"
